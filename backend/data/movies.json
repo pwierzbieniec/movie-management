@@ -1,0 +1,47 @@
+[
+  {
+    "id": 1,
+    "title": "Inception",
+    "overview": "A thief who steals corporate secrets through dream-sharing technology.",
+    "releaseDate": "2010-07-16",
+    "rating": 8.8,
+    "genres": ["Science Fiction", "Action"],
+    "posterPath": "/inception.jpg"
+  },
+  {
+    "id": 2,
+    "title": "The Dark Knight",
+    "overview": "Batman faces a criminal mastermind known as the Joker.",
+    "releaseDate": "2008-07-18",
+    "rating": 9.0,
+    "genres": ["Action", "Crime", "Drama"],
+    "posterPath": "/dark-knight.jpg"
+  },
+  {
+    "id": 3,
+    "title": "Interstellar",
+    "overview": "A team of explorers travel through a wormhole in space.",
+    "releaseDate": "2014-11-07",
+    "rating": 8.7,
+    "genres": ["Science Fiction", "Drama"],
+    "posterPath": "/interstellar.jpg"
+  },
+  {
+    "id": 4,
+    "title": "The Matrix",
+    "overview": "A computer hacker discovers a mysterious world.",
+    "releaseDate": "1999-03-31",
+    "rating": 8.7,
+    "genres": ["Science Fiction", "Action"],
+    "posterPath": "/matrix.jpg"
+  },
+  {
+    "id": 5,
+    "title": "Pulp Fiction",
+    "overview": "Various interconnected stories of criminals in Los Angeles.",
+    "releaseDate": "1994-09-10",
+    "rating": 8.9,
+    "genres": ["Crime", "Drama"],
+    "posterPath": "/pulp-fiction.jpg"
+  }
+]
