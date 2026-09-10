@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { FindMoviesDto } from './dto/find-movies.dto.js';
 import { Movie } from '../movie.interface.js';
+import { NotFoundException } from '@nestjs/common';
 
 @Injectable()
 export class MoviesService {
@@ -77,5 +78,20 @@ async findAll(query: FindMoviesDto) {
       totalPages,
     },
   };
+}
+
+async findOne(id: number): Promise<Movie> {
+  const filePath = join(process.cwd(), 'data', 'movies.json');
+  const file = await readFile(filePath, 'utf-8');
+
+  const movies = JSON.parse(file) as Movie[];
+
+  const movie = movies.find((movie) => movie.id === id);
+
+  if (!movie) {
+    throw new NotFoundException(`Movie with id ${id} not found`);
+  }
+
+  return movie;
 }
 }
