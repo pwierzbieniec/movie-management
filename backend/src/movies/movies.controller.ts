@@ -6,6 +6,8 @@ import {
   Query,
   Body,
   Post,
+  Patch,
+  Delete,
 } from '@nestjs/common';
 import {
   ApiOkResponse,
@@ -17,6 +19,7 @@ import { MoviesListResponseDto } from './dto/movies-list-response.dto.js';
 import { FindMoviesDto } from './dto/find-movies.dto.js';
 import { MovieResponseDto } from './dto/movie-response.dto.js';
 import { CreateMovieDto } from './dto/create-movie.dto.js';
+import { UpdateMovieDto } from './dto/update-movie.dto.js';
 
 @ApiTags('movies')
 @Controller('movies')
@@ -45,5 +48,19 @@ export class MoviesController {
 })
 create(@Body() createMovieDto: CreateMovieDto) {
   return this.moviesService.create(createMovieDto);
+}
+
+@Patch(':id')
+@ApiOkResponse({ type: MovieResponseDto })
+update(
+  @Param('id', ParseIntPipe) id: number,
+  @Body() updateMovieDto: UpdateMovieDto,
+) {
+  return this.moviesService.update(id, updateMovieDto);
+}
+
+@Delete(':id')
+delete(@Param('id', ParseIntPipe) id: number) {
+  return this.moviesService.delete(id);
 }
 }

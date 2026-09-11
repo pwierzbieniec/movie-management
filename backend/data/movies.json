@@ -59,17 +59,5 @@
       "Drama"
     ],
     "posterPath": "/pulp-fiction.jpg"
-  },
-  {
-    "id": 6,
-    "title": "Inception",
-    "overview": "A thief who steals corporate secrets through dream-sharing technology.",
-    "releaseDate": "2010-07-16",
-    "rating": 8.8,
-    "genres": [
-      "Science Fiction",
-      "Action"
-    ],
-    "posterPath": "https://image.tmdb.org/t/p/w500/example.jpg"
   }
 ]

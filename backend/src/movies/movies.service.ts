@@ -5,6 +5,7 @@ import { FindMoviesDto } from './dto/find-movies.dto.js';
 import { Movie } from '../movie.interface.js';
 import { NotFoundException } from '@nestjs/common';
 import { CreateMovieDto } from './dto/create-movie.dto.js';
+import { UpdateMovieDto } from './dto/update-movie.dto.js';
 
 @Injectable()
 export class MoviesService {
@@ -118,5 +119,60 @@ async create(createMovieDto: CreateMovieDto): Promise<Movie> {
   );
 
   return newMovie;
+}
+
+async update(
+  id: number,
+  updateMovieDto: UpdateMovieDto,
+): Promise<Movie> {
+  const filePath = join(process.cwd(), 'data', 'movies.json');
+  const file = await readFile(filePath, 'utf-8');
+
+  const movies = JSON.parse(file) as Movie[];
+
+  const movieIndex = movies.findIndex((movie) => movie.id === id);
+
+  if (movieIndex === -1) {
+    throw new NotFoundException(`Movie with id ${id} not found`);
+  }
+
+  const updatedMovie: Movie = {
+    ...movies[movieIndex],
+    ...updateMovieDto,
+    id,
+  };
+
+  movies[movieIndex] = updatedMovie;
+
+  await writeFile(
+    filePath,
+    JSON.stringify(movies, null, 2),
+    'utf-8',
+  );
+
+  return updatedMovie;
+}
+
+async delete(id: number): Promise<Movie> {
+  const filePath = join(process.cwd(), 'data', 'movies.json');
+  const file = await readFile(filePath, 'utf-8');
+
+  const movies = JSON.parse(file) as Movie[];
+
+  const movieIndex = movies.findIndex((movie) => movie.id === id);
+
+  if (movieIndex === -1) {
+    throw new NotFoundException(`Movie with id ${id} not found`);
+  }
+
+  const [deletedMovie] = movies.splice(movieIndex, 1);
+
+  await writeFile(
+    filePath,
+    JSON.stringify(movies, null, 2),
+    'utf-8',
+  );
+
+  return deletedMovie;
 }
 }
