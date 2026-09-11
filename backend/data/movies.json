@@ -5,7 +5,10 @@
     "overview": "A thief who steals corporate secrets through dream-sharing technology.",
     "releaseDate": "2010-07-16",
     "rating": 8.8,
-    "genres": ["Science Fiction", "Action"],
+    "genres": [
+      "Science Fiction",
+      "Action"
+    ],
     "posterPath": "/inception.jpg"
   },
   {
@@ -13,8 +16,12 @@
     "title": "The Dark Knight",
     "overview": "Batman faces a criminal mastermind known as the Joker.",
     "releaseDate": "2008-07-18",
-    "rating": 9.0,
-    "genres": ["Action", "Crime", "Drama"],
+    "rating": 9,
+    "genres": [
+      "Action",
+      "Crime",
+      "Drama"
+    ],
     "posterPath": "/dark-knight.jpg"
   },
   {
@@ -23,7 +30,10 @@
     "overview": "A team of explorers travel through a wormhole in space.",
     "releaseDate": "2014-11-07",
     "rating": 8.7,
-    "genres": ["Science Fiction", "Drama"],
+    "genres": [
+      "Science Fiction",
+      "Drama"
+    ],
     "posterPath": "/interstellar.jpg"
   },
   {
@@ -32,7 +42,10 @@
     "overview": "A computer hacker discovers a mysterious world.",
     "releaseDate": "1999-03-31",
     "rating": 8.7,
-    "genres": ["Science Fiction", "Action"],
+    "genres": [
+      "Science Fiction",
+      "Action"
+    ],
     "posterPath": "/matrix.jpg"
   },
   {
@@ -41,7 +54,22 @@
     "overview": "Various interconnected stories of criminals in Los Angeles.",
     "releaseDate": "1994-09-10",
     "rating": 8.9,
-    "genres": ["Crime", "Drama"],
+    "genres": [
+      "Crime",
+      "Drama"
+    ],
     "posterPath": "/pulp-fiction.jpg"
+  },
+  {
+    "id": 6,
+    "title": "Inception",
+    "overview": "A thief who steals corporate secrets through dream-sharing technology.",
+    "releaseDate": "2010-07-16",
+    "rating": 8.8,
+    "genres": [
+      "Science Fiction",
+      "Action"
+    ],
+    "posterPath": "https://image.tmdb.org/t/p/w500/example.jpg"
   }
 ]

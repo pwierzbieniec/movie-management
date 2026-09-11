@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { readFile, writeFile } from 'node:fs/promises';
 import { FindMoviesDto } from './dto/find-movies.dto.js';
 import { Movie } from '../movie.interface.js';
 import { NotFoundException } from '@nestjs/common';
+import { CreateMovieDto } from './dto/create-movie.dto.js';
 
 @Injectable()
 export class MoviesService {
@@ -93,5 +94,29 @@ async findOne(id: number): Promise<Movie> {
   }
 
   return movie;
+}
+
+async create(createMovieDto: CreateMovieDto): Promise<Movie> {
+  const filePath = join(process.cwd(), 'data', 'movies.json');
+  const file = await readFile(filePath, 'utf-8');
+
+  const movies = JSON.parse(file) as Movie[];
+
+  const newMovie: Movie = {
+    id: movies.length > 0
+      ? Math.max(...movies.map((movie) => movie.id)) + 1
+      : 1,
+    ...createMovieDto,
+  };
+
+  movies.push(newMovie);
+
+  await writeFile(
+    filePath,
+    JSON.stringify(movies, null, 2),
+    'utf-8',
+  );
+
+  return newMovie;
 }
 }
