@@ -3,12 +3,14 @@ import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
 import { ConfigModule } from '@nestjs/config';
 import { MoviesModule } from './movies/movies.module.js';
+import { PrismaModule } from './database/prisma.module.js';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    PrismaModule,
     MoviesModule,
   ],
   controllers: [AppController],
