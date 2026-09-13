@@ -1,19 +1,17 @@
 import { Injectable } from '@nestjs/common';
-import { join } from 'node:path';
-import { readFile, writeFile } from 'node:fs/promises';
 import { FindMoviesDto } from './dto/find-movies.dto.js';
 import { Movie } from '../movie.interface.js';
 import { NotFoundException } from '@nestjs/common';
 import { CreateMovieDto } from './dto/create-movie.dto.js';
 import { UpdateMovieDto } from './dto/update-movie.dto.js';
+import { MoviesRepository } from './repositories/movies.repository.js';
 
 @Injectable()
 export class MoviesService {
-async findAll(query: FindMoviesDto) {
-  const filePath = join(process.cwd(), 'data', 'movies.json');
-  const file = await readFile(filePath, 'utf-8');
+  constructor(private readonly moviesRepository: MoviesRepository) {}
 
-  const movies = JSON.parse(file) as Movie[];
+  async findAll(query: FindMoviesDto) {
+    const movies = await this.moviesRepository.findAll();
 
   const { page, limit, search, sortBy, sortOrder, genre } = query;
 
@@ -83,10 +81,8 @@ async findAll(query: FindMoviesDto) {
 }
 
 async findOne(id: number): Promise<Movie> {
-  const filePath = join(process.cwd(), 'data', 'movies.json');
-  const file = await readFile(filePath, 'utf-8');
 
-  const movies = JSON.parse(file) as Movie[];
+  const movies = await this.moviesRepository.findAll();
 
   const movie = movies.find((movie) => movie.id === id);
 
@@ -98,10 +94,8 @@ async findOne(id: number): Promise<Movie> {
 }
 
 async create(createMovieDto: CreateMovieDto): Promise<Movie> {
-  const filePath = join(process.cwd(), 'data', 'movies.json');
-  const file = await readFile(filePath, 'utf-8');
 
-  const movies = JSON.parse(file) as Movie[];
+ const movies = await this.moviesRepository.findAll();
 
   const newMovie: Movie = {
     id: movies.length > 0
@@ -112,11 +106,7 @@ async create(createMovieDto: CreateMovieDto): Promise<Movie> {
 
   movies.push(newMovie);
 
-  await writeFile(
-    filePath,
-    JSON.stringify(movies, null, 2),
-    'utf-8',
-  );
+  await this.moviesRepository.save(movies);
 
   return newMovie;
 }
@@ -125,10 +115,7 @@ async update(
   id: number,
   updateMovieDto: UpdateMovieDto,
 ): Promise<Movie> {
-  const filePath = join(process.cwd(), 'data', 'movies.json');
-  const file = await readFile(filePath, 'utf-8');
-
-  const movies = JSON.parse(file) as Movie[];
+const movies = await this.moviesRepository.findAll();
 
   const movieIndex = movies.findIndex((movie) => movie.id === id);
 
@@ -144,20 +131,13 @@ async update(
 
   movies[movieIndex] = updatedMovie;
 
-  await writeFile(
-    filePath,
-    JSON.stringify(movies, null, 2),
-    'utf-8',
-  );
+  await this.moviesRepository.save(movies);
 
   return updatedMovie;
 }
 
 async delete(id: number): Promise<Movie> {
-  const filePath = join(process.cwd(), 'data', 'movies.json');
-  const file = await readFile(filePath, 'utf-8');
-
-  const movies = JSON.parse(file) as Movie[];
+const movies = await this.moviesRepository.findAll();
 
   const movieIndex = movies.findIndex((movie) => movie.id === id);
 
@@ -167,11 +147,7 @@ async delete(id: number): Promise<Movie> {
 
   const [deletedMovie] = movies.splice(movieIndex, 1);
 
-  await writeFile(
-    filePath,
-    JSON.stringify(movies, null, 2),
-    'utf-8',
-  );
+  await this.moviesRepository.save(movies);
 
   return deletedMovie;
 }
