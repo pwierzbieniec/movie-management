@@ -6,6 +6,7 @@ describe('MoviesRepository', () => {
   let repository: MoviesRepository;
 
   const prismaMock = {
+    $transaction: vi.fn(),
     movie: {
       findMany: vi.fn(),
       count: vi.fn(),
@@ -14,6 +15,7 @@ describe('MoviesRepository', () => {
       update: vi.fn(),
       delete: vi.fn(),
       deleteMany: vi.fn(),
+      upsert: vi.fn(),
     },
     genre: {
       deleteMany: vi.fn(),
@@ -798,4 +800,154 @@ describe('MoviesRepository', () => {
       });
     });
   });
+
+ describe('upsertFromTmdb', () => {
+  it('should upsert a movie from TMDB', async () => {
+    const importedMovie = {
+      tmdbId: 27205,
+      title: 'Inception',
+      overview:
+        'A thief who steals corporate secrets through dream-sharing technology.',
+      releaseDate: '2010-07-16',
+      rating: 8.8,
+      genres: ['Action', 'Science Fiction'],
+      posterPath: 'https://image.tmdb.org/t/p/w500/inception.jpg',
+    };
+
+    const txMock = {
+      movie: {
+        upsert: vi.fn().mockResolvedValue({
+          ...prismaMovies[0],
+          tmdbId: 27205,
+        }),
+        findUniqueOrThrow: vi.fn().mockResolvedValue({
+          ...prismaMovies[0],
+          tmdbId: 27205,
+          genres: [
+            {
+              genre: {
+                id: 1,
+                name: 'Science Fiction',
+              },
+            },
+            {
+              genre: {
+                id: 2,
+                name: 'Action',
+              },
+            },
+          ],
+        }),
+      },
+      genre: {
+        upsert: vi.fn()
+          .mockResolvedValueOnce({
+            id: 2,
+            name: 'Action',
+          })
+          .mockResolvedValueOnce({
+            id: 1,
+            name: 'Science Fiction',
+          }),
+      },
+      movieGenre: {
+        deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+        create: vi.fn().mockResolvedValue({}),
+      },
+    };
+
+    prismaMock.$transaction.mockImplementation(async (callback) => {
+      return callback(txMock);
+    });
+
+    const result = await repository.upsertFromTmdb(importedMovie);
+
+    expect(result).toEqual({
+      id: 1,
+      title: 'Inception',
+      overview:
+        'A thief who steals corporate secrets through dream-sharing technology.',
+      releaseDate: '2010-07-16',
+      rating: 8.8,
+      genres: ['Science Fiction', 'Action'],
+      posterPath: 'https://example.com/inception.jpg',
+    });
+
+    expect(txMock.movie.upsert).toHaveBeenCalledWith({
+      where: {
+        tmdbId: 27205,
+      },
+      update: {
+        title: 'Inception',
+        overview:
+          'A thief who steals corporate secrets through dream-sharing technology.',
+        releaseDate: new Date('2010-07-16'),
+        rating: 8.8,
+        posterPath: 'https://image.tmdb.org/t/p/w500/inception.jpg',
+      },
+      create: {
+        tmdbId: 27205,
+        title: 'Inception',
+        overview:
+          'A thief who steals corporate secrets through dream-sharing technology.',
+        releaseDate: new Date('2010-07-16'),
+        rating: 8.8,
+        posterPath: 'https://image.tmdb.org/t/p/w500/inception.jpg',
+      },
+    });
+
+    expect(txMock.movieGenre.deleteMany).toHaveBeenCalledWith({
+      where: {
+        movieId: 1,
+      },
+    });
+
+    expect(txMock.genre.upsert).toHaveBeenNthCalledWith(1, {
+      where: {
+        name: 'Action',
+      },
+      update: {},
+      create: {
+        name: 'Action',
+      },
+    });
+
+    expect(txMock.genre.upsert).toHaveBeenNthCalledWith(2, {
+      where: {
+        name: 'Science Fiction',
+      },
+      update: {},
+      create: {
+        name: 'Science Fiction',
+      },
+    });
+
+    expect(txMock.movieGenre.create).toHaveBeenNthCalledWith(1, {
+      data: {
+        movieId: 1,
+        genreId: 2,
+      },
+    });
+
+    expect(txMock.movieGenre.create).toHaveBeenNthCalledWith(2, {
+      data: {
+        movieId: 1,
+        genreId: 1,
+      },
+    });
+
+    expect(txMock.movie.findUniqueOrThrow).toHaveBeenCalledWith({
+      where: {
+        id: 1,
+      },
+      include: {
+        genres: {
+          include: {
+            genre: true,
+          },
+        },
+      },
+    });
+  });
+});
 });

@@ -5,6 +5,7 @@ import { Movie } from '../../movie.interface.js';
 import { CreateMovieDto } from '../dto/create-movie.dto.js';
 import { UpdateMovieDto } from '../dto/update-movie.dto.js';
 import { FindMoviesDto } from '../dto/find-movies.dto.js';
+import { TmdbMovieImport } from '../../tmdb/tmdb-movie-import.interface.js';
 
 type PrismaMovieWithGenres = PrismaMovie & {
   genres: {
@@ -214,4 +215,59 @@ async findAll(query: FindMoviesDto) {
       posterPath: movie.posterPath,
     };
   }
+
+async upsertFromTmdb(movie: TmdbMovieImport): Promise<Movie> {
+  return this.prisma.$transaction(async (tx) => {
+    const movieData = {
+      title: movie.title,
+      overview: movie.overview,
+      releaseDate: new Date(movie.releaseDate),
+      rating: movie.rating,
+      posterPath: movie.posterPath,
+    };
+
+    const savedMovie = await tx.movie.upsert({
+      where: { tmdbId: movie.tmdbId },
+      update: movieData,
+      create: {
+        tmdbId: movie.tmdbId,
+        ...movieData,
+      },
+    });
+
+    await tx.movieGenre.deleteMany({
+      where: {
+        movieId: savedMovie.id,
+      },
+    });
+
+    for (const name of movie.genres) {
+      const genre = await tx.genre.upsert({
+        where: { name },
+        update: {},
+        create: { name },
+      });
+
+      await tx.movieGenre.create({
+        data: {
+          movieId: savedMovie.id,
+          genreId: genre.id,
+        },
+      });
+    }
+
+    const movieWithGenres = await tx.movie.findUniqueOrThrow({
+      where: { id: savedMovie.id },
+      include: {
+        genres: {
+          include: {
+            genre: true,
+          },
+        },
+      },
+    });
+
+    return this.mapToMovie(movieWithGenres);
+  });
+}
 }

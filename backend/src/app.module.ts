@@ -4,6 +4,7 @@ import { AppService } from './app.service.js';
 import { ConfigModule } from '@nestjs/config';
 import { MoviesModule } from './movies/movies.module.js';
 import { PrismaModule } from './database/prisma.module.js';
+import { TmdbModule } from './tmdb/tmdb.module.js';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { PrismaModule } from './database/prisma.module.js';
     }),
     PrismaModule,
     MoviesModule,
+    TmdbModule,
   ],
   controllers: [AppController],
   providers: [AppService],
