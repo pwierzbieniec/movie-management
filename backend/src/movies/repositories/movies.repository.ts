@@ -4,6 +4,7 @@ import { Movie as PrismaMovie } from '../../generated/prisma/client.js';
 import { Movie } from '../../movie.interface.js';
 import { CreateMovieDto } from '../dto/create-movie.dto.js';
 import { UpdateMovieDto } from '../dto/update-movie.dto.js';
+import { FindMoviesDto } from '../dto/find-movies.dto.js';
 
 type PrismaMovieWithGenres = PrismaMovie & {
   genres: {
@@ -17,8 +18,52 @@ type PrismaMovieWithGenres = PrismaMovie & {
 export class MoviesRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(): Promise<Movie[]> {
-    const movies = await this.prisma.movie.findMany({
+async findAll(query: FindMoviesDto) {
+  const {
+    page,
+    limit,
+    search,
+    sortBy,
+    sortOrder,
+    genre,
+  } = query;
+
+  const where = {
+    ...(search && {
+      title: {
+        contains: search.trim(),
+        mode: 'insensitive' as const,
+      },
+    }),
+
+    ...(genre && {
+      genres: {
+        some: {
+          genre: {
+            name: {
+              equals: genre.trim(),
+              mode: 'insensitive' as const,
+            },
+          },
+        },
+      },
+    }),
+  };
+
+  const orderBy = sortBy
+    ? {
+        [sortBy]: sortOrder === 'desc' ? 'desc' : 'asc',
+      }
+    : undefined;
+
+  const skip = (page - 1) * limit;
+
+  const [movies, total] = await Promise.all([
+    this.prisma.movie.findMany({
+      where,
+      orderBy,
+      skip,
+      take: limit,
       include: {
         genres: {
           include: {
@@ -26,10 +71,21 @@ export class MoviesRepository {
           },
         },
       },
-    });
+    }),
 
-    return movies.map((movie) => this.mapToMovie(movie));
-  }
+    this.prisma.movie.count({ where }),
+  ]);
+
+  return {
+    data: movies.map((movie) => this.mapToMovie(movie)),
+    meta: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
+}
 
   async findOne(id: number): Promise<Movie | null> {
     const movie = await this.prisma.movie.findUnique({

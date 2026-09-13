@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
+
 import { MoviesService } from './movies.service.js';
 import { MoviesRepository } from './repositories/movies.repository.js';
 
@@ -59,7 +60,10 @@ describe('MoviesService', () => {
 
   const moviesRepositoryMock = {
     findAll: vi.fn(),
-    save: vi.fn(),
+    findOne: vi.fn(),
+    create: vi.fn(),
+    update: vi.fn(),
+    delete: vi.fn(),
   };
 
   beforeEach(async () => {
@@ -76,140 +80,57 @@ describe('MoviesService', () => {
     service = module.get<MoviesService>(MoviesService);
 
     vi.clearAllMocks();
+  });
 
-    moviesRepositoryMock.findAll.mockResolvedValue(
-      structuredClone(movies),
-    );
+  describe('findAll', () => {
+    it('should return movies from repository', async () => {
+      const query = {
+        page: 1,
+        limit: 2,
+      };
+
+      const repositoryResult = {
+        data: [movies[0], movies[1]],
+        meta: {
+          page: 1,
+          limit: 2,
+          total: 5,
+          totalPages: 3,
+        },
+      };
+
+      moviesRepositoryMock.findAll.mockResolvedValue(repositoryResult);
+
+      const result = await service.findAll(query);
+
+      expect(result).toEqual(repositoryResult);
+
+      expect(moviesRepositoryMock.findAll).toHaveBeenCalledTimes(1);
+      expect(moviesRepositoryMock.findAll).toHaveBeenCalledWith(query);
+    });
   });
 
   describe('findOne', () => {
     it('should return a movie when movie exists', async () => {
+      moviesRepositoryMock.findOne.mockResolvedValue(movies[0]);
+
       const movie = await service.findOne(1);
 
-      expect(movie).toBeDefined();
-      expect(movie.id).toBe(1);
-      expect(movie.title).toBe('Inception');
+      expect(movie).toEqual(movies[0]);
+
+      expect(moviesRepositoryMock.findOne).toHaveBeenCalledTimes(1);
+      expect(moviesRepositoryMock.findOne).toHaveBeenCalledWith(1);
     });
 
     it('should throw NotFoundException when movie does not exist', async () => {
-      await expect(service.findOne(999999)).rejects.toThrow(
-        NotFoundException,
-      );
-    });
-  });
+      moviesRepositoryMock.findOne.mockResolvedValue(null);
 
-  describe('findAll', () => {
-    it('should return paginated movies', async () => {
-      const result = await service.findAll({
-        page: 1,
-        limit: 2,
-      });
+      await expect(
+        service.findOne(999999),
+      ).rejects.toThrow(NotFoundException);
 
-      expect(result.data).toHaveLength(2);
-      expect(result.meta.page).toBe(1);
-      expect(result.meta.limit).toBe(2);
-      expect(result.meta.total).toBe(5);
-      expect(result.meta.totalPages).toBe(3);
-    });
-
-    it('should search movies by title', async () => {
-      const result = await service.findAll({
-        page: 1,
-        limit: 20,
-        search: 'inception',
-      });
-
-      expect(result.data).toHaveLength(1);
-      expect(result.data[0].title).toBe('Inception');
-    });
-
-    it('should filter movies by genre', async () => {
-      const result = await service.findAll({
-        page: 1,
-        limit: 20,
-        genre: 'Action',
-      });
-
-      expect(result.data.length).toBeGreaterThan(0);
-
-      result.data.forEach((movie) => {
-        expect(
-          movie.genres.some(
-            (genre) => genre.toLowerCase() === 'action',
-          ),
-        ).toBe(true);
-      });
-    });
-
-    it('should sort movies by rating descending', async () => {
-      const result = await service.findAll({
-        page: 1,
-        limit: 20,
-        sortBy: 'rating',
-        sortOrder: 'desc',
-      });
-
-      for (let i = 1; i < result.data.length; i++) {
-        expect(result.data[i - 1].rating).toBeGreaterThanOrEqual(
-          result.data[i].rating,
-        );
-      }
-    });
-
-    it('should sort movies by title ascending', async () => {
-      const result = await service.findAll({
-        page: 1,
-        limit: 20,
-        sortBy: 'title',
-        sortOrder: 'asc',
-      });
-
-      for (let i = 1; i < result.data.length; i++) {
-        expect(
-          result.data[i - 1].title.localeCompare(
-            result.data[i].title,
-          ),
-        ).toBeLessThanOrEqual(0);
-      }
-    });
-
-    it('should calculate totalPages correctly', async () => {
-      const result = await service.findAll({
-        page: 1,
-        limit: 2,
-      });
-
-      expect(result.meta.totalPages).toBe(
-        Math.ceil(result.meta.total / result.meta.limit),
-      );
-    });
-
-    it('should combine search, genre, sorting and pagination', async () => {
-      const result = await service.findAll({
-        page: 1,
-        limit: 2,
-        search: 'the',
-        genre: 'Action',
-        sortBy: 'rating',
-        sortOrder: 'desc',
-      });
-
-      expect(result.data.length).toBeLessThanOrEqual(2);
-
-      for (let i = 1; i < result.data.length; i++) {
-        expect(result.data[i - 1].rating).toBeGreaterThanOrEqual(
-          result.data[i].rating,
-        );
-      }
-
-      result.data.forEach((movie) => {
-        expect(movie.title.toLowerCase()).toContain('the');
-        expect(
-          movie.genres.some(
-            (genre) => genre.toLowerCase() === 'action',
-          ),
-        ).toBe(true);
-      });
+      expect(moviesRepositoryMock.findOne).toHaveBeenCalledTimes(1);
+      expect(moviesRepositoryMock.findOne).toHaveBeenCalledWith(999999);
     });
   });
 
@@ -224,15 +145,21 @@ describe('MoviesService', () => {
         posterPath: 'https://example.com/dune.jpg',
       };
 
+      const createdMovie = {
+        id: 6,
+        ...createMovieDto,
+      };
+
+      moviesRepositoryMock.create.mockResolvedValue(createdMovie);
+
       const movie = await service.create(createMovieDto);
 
-      expect(movie).toBeDefined();
-      expect(movie.id).toBe(6);
-      expect(movie.title).toBe(createMovieDto.title);
-      expect(movie.rating).toBe(createMovieDto.rating);
-      expect(movie.genres).toEqual(createMovieDto.genres);
+      expect(movie).toEqual(createdMovie);
 
-      expect(moviesRepositoryMock.save).toHaveBeenCalledTimes(1);
+      expect(moviesRepositoryMock.create).toHaveBeenCalledTimes(1);
+      expect(moviesRepositoryMock.create).toHaveBeenCalledWith(
+        createMovieDto,
+      );
     });
   });
 
@@ -242,41 +169,64 @@ describe('MoviesService', () => {
         rating: 9.5,
       };
 
+      const updatedMovie = {
+        ...movies[0],
+        rating: 9.5,
+      };
+
+      moviesRepositoryMock.update.mockResolvedValue(updatedMovie);
+
       const movie = await service.update(1, updateMovieDto);
 
-      expect(movie).toBeDefined();
-      expect(movie.id).toBe(1);
-      expect(movie.rating).toBe(9.5);
-      expect(movie.title).toBe('Inception');
+      expect(movie).toEqual(updatedMovie);
 
-      expect(moviesRepositoryMock.save).toHaveBeenCalledTimes(1);
+      expect(moviesRepositoryMock.update).toHaveBeenCalledTimes(1);
+      expect(moviesRepositoryMock.update).toHaveBeenCalledWith(
+        1,
+        updateMovieDto,
+      );
     });
 
     it('should throw NotFoundException when movie does not exist', async () => {
+      const updateMovieDto = {
+        rating: 9.5,
+      };
+
+      moviesRepositoryMock.update.mockResolvedValue(null);
+
       await expect(
-        service.update(999999, { rating: 9.5 }),
+        service.update(999999, updateMovieDto),
       ).rejects.toThrow(NotFoundException);
 
-      expect(moviesRepositoryMock.save).not.toHaveBeenCalled();
+      expect(moviesRepositoryMock.update).toHaveBeenCalledTimes(1);
+      expect(moviesRepositoryMock.update).toHaveBeenCalledWith(
+        999999,
+        updateMovieDto,
+      );
     });
   });
 
   describe('delete', () => {
     it('should delete an existing movie', async () => {
+      moviesRepositoryMock.delete.mockResolvedValue(movies[0]);
+
       const movie = await service.delete(1);
 
-      expect(movie).toBeDefined();
-      expect(movie.id).toBe(1);
+      expect(movie).toEqual(movies[0]);
 
-      expect(moviesRepositoryMock.save).toHaveBeenCalledTimes(1);
+      expect(moviesRepositoryMock.delete).toHaveBeenCalledTimes(1);
+      expect(moviesRepositoryMock.delete).toHaveBeenCalledWith(1);
     });
 
     it('should throw NotFoundException when movie does not exist', async () => {
+      moviesRepositoryMock.delete.mockResolvedValue(null);
+
       await expect(
         service.delete(999999),
       ).rejects.toThrow(NotFoundException);
 
-      expect(moviesRepositoryMock.save).not.toHaveBeenCalled();
+      expect(moviesRepositoryMock.delete).toHaveBeenCalledTimes(1);
+      expect(moviesRepositoryMock.delete).toHaveBeenCalledWith(999999);
     });
   });
 });
