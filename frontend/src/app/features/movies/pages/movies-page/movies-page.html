@@ -1,0 +1,55 @@
+<h1>Movies</h1>
+
+<div class="movies-toolbar">
+  <input
+    type="search"
+    [formControl]="searchControl"
+    (input)="resetPage()"
+    placeholder="Search movies..."
+  />
+
+  <select
+    [formControl]="sortByControl"
+    (change)="resetPage()"
+  >
+    <option value="title">Title</option>
+    <option value="rating">Rating</option>
+    <option value="releaseDate">Release date</option>
+  </select>
+
+  <select
+    [formControl]="sortOrderControl"
+    (change)="resetPage()"
+  >
+    <option value="asc">Ascending</option>
+    <option value="desc">Descending</option>
+  </select>
+</div>
+
+<section class="movies-grid">
+  @for (movie of movies(); track movie.id) {
+    <app-movie-card [movie]="movie" />
+  }
+</section>
+
+<nav class="pagination">
+  <button
+    type="button"
+    (click)="goToPreviousPage()"
+    [disabled]="currentPage() === 1"
+  >
+    Previous
+  </button>
+
+  <span>
+    Page {{ currentPage() }} of {{ totalPages() }}
+  </span>
+
+  <button
+    type="button"
+    (click)="goToNextPage()"
+    [disabled]="currentPage() === totalPages()"
+  >
+    Next
+  </button>
+</nav>

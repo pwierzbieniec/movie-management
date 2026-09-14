@@ -1,0 +1,24 @@
+<article class="movie-card">
+  <img
+    [src]="movie().posterPath"
+    [alt]="movie().title"
+  />
+
+  <div class="movie-card__content">
+    <h2>{{ movie().title }}</h2>
+
+    <p>
+      {{ movie().releaseDate }}
+    </p>
+
+    <p>
+      ⭐ {{ movie().rating }}
+    </p>
+
+    <div class="movie-card__genres">
+      @for (genre of movie().genres; track genre) {
+        <span>{{ genre }}</span>
+      }
+    </div>
+  </div>
+</article>
